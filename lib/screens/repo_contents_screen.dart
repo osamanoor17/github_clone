@@ -6,17 +6,17 @@ import 'fileview_screen.dart';
 class RepoContentsScreen extends StatelessWidget {
   final String username;
   final String repoName;
-  final String path; // Folder path ko pass karenge
+  final String path;
   final GitHubController controller = Get.find();
 
-  // Constructor updated to handle path
+
   RepoContentsScreen({
     super.key,
     required this.username,
     required this.repoName,
-    this.path = '', // Agar path empty hai toh root directory
+    this.path = '',
   }) {
-    controller.getRepoContents(username, repoName, path); // Path pass karein
+    controller.getRepoContents(username, repoName, path);
   }
 
   @override

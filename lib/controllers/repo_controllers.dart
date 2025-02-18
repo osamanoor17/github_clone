@@ -8,11 +8,11 @@ class GitHubController extends GetxController {
   var userProfile = {}.obs;
   var page = 1.obs;
   var isMoreDataAvailable = true.obs;
-  var repoContents = [].obs; // ✅ Added for repo contents
+  var repoContents = [].obs;
 
   final Dio _dio = Dio();
 
-  // Get repositories for the user
+
   Future<void> getRepos(String username) async {
     if (username.isEmpty) return;
     isLoading(true);
@@ -38,7 +38,7 @@ class GitHubController extends GetxController {
     }
   }
 
-  // Load more repositories as the user scrolls
+
   Future<void> loadMoreRepos(String username) async {
     if (!isMoreDataAvailable.value) return;
 
@@ -58,7 +58,7 @@ class GitHubController extends GetxController {
     }
   }
 
-  // Get the contents of a specific repository
+
   Future<void> getRepoContents(String username, String repoName, String path) async {
     isLoading(true);
     try {
