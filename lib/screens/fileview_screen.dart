@@ -30,7 +30,7 @@ class FileViewerScreen extends StatelessWidget {
         }
         return SingleChildScrollView(
           padding: EdgeInsets.all(16),
-          child: SelectableText(fileContent.value), // ✅ Select aur copy kar sakte ho
+          child: SelectableText(fileContent.value),
         );
       }),
     );

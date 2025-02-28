@@ -1,5 +1,6 @@
-import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class GitHubController extends GetxController {
@@ -9,9 +10,7 @@ class GitHubController extends GetxController {
   var page = 1.obs;
   var isMoreDataAvailable = true.obs;
   var repoContents = [].obs;
-
-  final Dio _dio = Dio();
-
+  var currentRepoPath = ''.obs;
 
   Future<void> getRepos(String username) async {
     if (username.isEmpty) return;
@@ -20,33 +19,40 @@ class GitHubController extends GetxController {
     isMoreDataAvailable(true);
     repositories.clear();
 
+    final url =
+        'https://api.github.com/users/$username/repos?page=1&per_page=10';
+    final userUrl = 'https://api.github.com/users/$username';
     try {
-      final response = await _dio.get('https://api.github.com/users/$username/repos?page=1&per_page=10');
-      final userResponse = await _dio.get('https://api.github.com/users/$username');
+      final response = await http.get(Uri.parse(url));
+      final userResponse = await http.get(Uri.parse(userUrl));
 
       if (response.statusCode == 200) {
-        repositories.addAll(response.data);
+        final decodedData = json.decode(response.body);
+        repositories.addAll(decodedData);
       }
 
       if (userResponse.statusCode == 200) {
-        userProfile.value = userResponse.data;
+        userProfile.value = json.decode(userResponse.body);
       }
     } catch (e) {
-      print("Error: $e");
+      if (kDebugMode) {
+        print("Error: $e");
+      }
     } finally {
       isLoading(false);
     }
   }
 
-
   Future<void> loadMoreRepos(String username) async {
     if (!isMoreDataAvailable.value) return;
 
     page.value++;
+    final url =
+        'https://api.github.com/users/$username/repos?page=${page.value}&per_page=10';
     try {
-      final response = await _dio.get('https://api.github.com/users/$username/repos?page=${page.value}&per_page=10');
+      final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        var newRepos = response.data;
+        var newRepos = json.decode(response.body);
         if (newRepos.isNotEmpty) {
           repositories.addAll(newRepos);
         } else {
@@ -57,31 +63,37 @@ class GitHubController extends GetxController {
       print("Error: $e");
     }
   }
-
-
   Future<void> getRepoContents(String username, String repoName, String path) async {
-    isLoading(true);
-    try {
-      final response = await _dio.get(
-        'https://api.github.com/repos/$username/$repoName/contents/${Uri.encodeComponent(path)}',
-        options: Options(responseType: ResponseType.json),
-      );
+    isLoading.value = true;
+    currentRepoPath.value = path; // ✅ Ensure path is updated first
+    repoContents.clear(); // ✅ Clear old contents before fetching new data
 
-      if (response.statusCode == 200 && response.data is List) {
-        repoContents.value = response.data;
+    try {
+      final url = Uri.parse("https://api.github.com/repos/$username/$repoName/contents/$path");
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        repoContents.assignAll(data.map((item) {
+          return {
+            'name': item['name'],
+            'type': item['type'],
+            'download_url': item['download_url'] ?? '',
+          };
+        }).toList());
       } else {
+        print("API Error: ${response.statusCode}");
         repoContents.clear();
       }
-    } on DioError catch (e) {
-      print("DioError: ${e.response?.statusCode} - ${e.message}");
-      repoContents.clear();
     } catch (e) {
-      print("Unexpected Error: $e");
+      print("Error fetching repo contents: $e");
       repoContents.clear();
     } finally {
-      isLoading(false);
+      isLoading.value = false;
     }
   }
+
+
 
 
 }
