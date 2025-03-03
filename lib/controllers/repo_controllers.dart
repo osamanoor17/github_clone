@@ -69,7 +69,8 @@ class GitHubController extends GetxController {
     repoContents.clear(); // ✅ Clear old contents before fetching new data
 
     try {
-      final url = Uri.parse("https://api.github.com/repos/$username/$repoName/contents/$path");
+      final encodedPath = Uri.encodeComponent(path);
+      final url = Uri.parse("https://api.github.com/repos/$username/$repoName/contents/$encodedPath");
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
