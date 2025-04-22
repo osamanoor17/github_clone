@@ -1,16 +1,83 @@
-# github_clone
+# GitHub Clone
 
-A new Flutter project.
+A Flutter application that allows users to explore GitHub repositories, view repository contents, and browse code files.
+
+## Features
+
+- 🔍 Search repositories by name and description
+- 📂 Browse repository contents and files
+- 📝 View code files with syntax highlighting
+- ⭐ Sort repositories by last updated date
+- 🌙 Dark/Light theme support
+- 📱 Responsive design for all screen sizes
+
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- Flutter SDK (version >=3.2.3)
+- Dart SDK (version >=3.2.3)
+- GitHub Personal Access Token
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### Installation
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository:
+```bash
+git clone https://github.com/osamanoor17/github-clone.git
+cd github-clone
+```
+
+2. Install dependencies:
+```bash
+flutter pub get
+```
+
+3. Configure GitHub Token:
+   - Create a GitHub Personal Access Token at https://github.com/settings/tokens
+   - Required scopes: `repo`, `user`
+   - Replace `YOUR_GITHUB_TOKEN_HERE` in `lib/controllers/repo_controllers.dart` with your token
+
+4. Run the app:
+```bash
+flutter run
+```
+
+## Project Structure
+
+```
+lib/
+├── controllers/
+│   └── repo_controllers.dart    # GitHub API and data management
+├── screens/
+│   ├── RepoListScreen.dart      # Repository list view
+│   ├── repo_contents_screen.dart # Repository contents view
+│   └── fileview_screen.dart     # Code file viewer
+└── main.dart                    # App entry point
+```
+
+## Dependencies
+
+- `get`: State management and navigation
+- `http`: API requests
+- `shimmer`: Loading animations
+- `url_launcher`: Opening URLs in browser
+- `font_awesome_flutter`: Icons
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- GitHub API
+- Flutter team
+- All contributors and supporters
