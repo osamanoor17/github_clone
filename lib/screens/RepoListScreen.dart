@@ -18,6 +18,7 @@ class RepoListScreen extends StatefulWidget {
 
 class _RepoListScreenState extends State<RepoListScreen> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _RepoListScreenState extends State<RepoListScreen> {
   void dispose() {
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -50,84 +52,138 @@ class _RepoListScreenState extends State<RepoListScreen> {
           title: const Text('Repositories',
               style: TextStyle(fontWeight: FontWeight.bold)),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Obx(() {
-            if (widget.controller.isLoading.value &&
-                widget.controller.repositories.isEmpty) {
-              return _shimmerLoading();
-            }
-      
-            if (widget.controller.repositories.isEmpty) {
-              return const Center(child: Text('No repositories found.'));
-            }
-      
-            return ListView.builder(
-              controller: _scrollController,
-              itemCount: widget.controller.repositories.length + 1,
-              itemBuilder: (context, index) {
-                if (index == widget.controller.repositories.length) {
-                  return widget.controller.isLoading.value
-                      ? const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: CircularProgressIndicator(),
-                        )
-                      : const SizedBox.shrink();
-                }
-      
-                final repo = widget.controller.repositories[index];
-                return GestureDetector(
-                  onTap: () async {
-                    final url = repo['html_url'];
-                    if (await canLaunch(url)) {
-                      await launch(url);
-                    }
-                  },
-                  child: GestureDetector(
-                    onTap: () {
-                      Get.to(() => RepoContentsScreen(
-                            username: widget.username,
-                            repoName: repo['name'],
-                          ));
-                    },
-                    child: Card(
-                      elevation: 8,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15)),
-                      shadowColor: Colors.black26,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 16),
-                        title: Text(
-                          repo['name'],
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        subtitle: Text(
-                          repo['description'] ?? 'No description',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 18,
-                            ),
-                            Text(
-                              ' ${repo['stargazers_count']}',
-                              style: TextStyle(fontSize: 14),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search repositories...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                );
-              },
-            );
-          }),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                onChanged: (value) {
+                  widget.controller.filterRepositories(value);
+                },
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Obx(() {
+                  if (widget.controller.errorMessage.isNotEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                          const SizedBox(height: 16),
+                          Text(
+                            widget.controller.errorMessage.value,
+                            style: TextStyle(color: Colors.red[300]),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  if (widget.controller.isLoading.value &&
+                      widget.controller.repositories.isEmpty) {
+                    return _shimmerLoading();
+                  }
+          
+                  if (widget.controller.filteredRepositories.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 48, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          Text(
+                            widget.controller.searchQuery.isEmpty
+                                ? 'No repositories found.'
+                                : 'No repositories match your search.',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+          
+                  return ListView.builder(
+                    controller: _scrollController,
+                    itemCount: widget.controller.filteredRepositories.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == widget.controller.filteredRepositories.length) {
+                        return widget.controller.isLoading.value
+                            ? const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(),
+                              )
+                            : const SizedBox.shrink();
+                      }
+          
+                      final repo = widget.controller.filteredRepositories[index];
+                      return GestureDetector(
+                        onTap: () async {
+                          final url = repo['html_url'];
+                          if (await canLaunch(url)) {
+                            await launch(url);
+                          }
+                        },
+                        child: GestureDetector(
+                          onTap: () {
+                            Get.to(() => RepoContentsScreen(
+                                  username: widget.username,
+                                  repoName: repo['name'],
+                                ));
+                          },
+                          child: Card(
+                            elevation: 8,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15)),
+                            shadowColor: Colors.black26,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 16),
+                              title: Text(
+                                repo['name'],
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              subtitle: Text(
+                                repo['description'] ?? 'No description',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.star,
+                                    color: Colors.amber,
+                                    size: 18,
+                                  ),
+                                  Text(
+                                    ' ${repo['stargazers_count']}',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ),
+            ),
+          ],
         ),
       ),
     );
